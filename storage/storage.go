@@ -34,6 +34,16 @@ CREATE TABLE IF NOT EXISTS files(
 `
 
 func New(storagePath string, dbFilePath string, maxStorageSize int64) (*Storage, error) {
+	err := os.MkdirAll(storagePath, 0700)
+	if err != nil {
+		return nil, fmt.Errorf("create storage path dir: %w", err)
+	}
+
+	err = os.MkdirAll(filepath.Base(dbFilePath), 0700)
+	if err != nil {
+		return nil, fmt.Errorf("create db file dir: %w", err)
+	}
+
 	dbc, err := sqlx.Connect("sqlite", dbFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("connect sqlite db: %w", err)

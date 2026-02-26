@@ -1,0 +1,17 @@
+services:
+  back:
+    container_name: box
+    build:
+      context: .
+    environment:
+      STORAGE_PATH: /vol/storage
+      DB_FILE_PATH: /vol/files.db
+      MAX_STORAGE_SIZE: ${MAX_STORAGE_SIZE}
+      BASE_PATH: ${BASE_PATH}
+      LISTEN_ADDR: "[::]:1080"
+    ports:
+      - ${LISTEN_PORT}:1080
+    volumes:
+      - /vol
+    cap_drop:
+      - ALL
