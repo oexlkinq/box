@@ -58,7 +58,7 @@ func New(storagePath string, dbFilePath string, maxStorageSize int64) (*Storage,
 
 var ErrFileIsTooBig = errors.New("file is bigger than max size of storage")
 
-func (s *Storage) Create(r io.Reader, url string, size int64) error {
+func (s *Storage) Put(r io.Reader, url string, size int64) error {
 	sizeQuota := s.maxStorageSize - size
 	if sizeQuota < 0 {
 		return ErrFileIsTooBig
@@ -113,18 +113,18 @@ func (s *Storage) Create(r io.Reader, url string, size int64) error {
 	}
 
 	file.Ts = int(time.Now().Unix())
-	file.Path = filepath.Join(s.storagePath, strconv.Itoa(file.Ts))
+	file.Path = strconv.Itoa(file.Ts)
 	file.Size = size
 	file.Url = url
 
-	// сделать запись в бд
+	// сделать в бд запись о новом файле
 	_, err = tx.NamedExec(`INSERT INTO files (ts, url, path, size) VALUES (:ts, :url, :path, :size)`, file)
 	if err != nil {
 		return fmt.Errorf("insert file row: %w", err)
 	}
 
 	// записать файл на диск
-	f, err := os.Create(file.Path)
+	f, err := os.Create(filepath.Join(s.storagePath, file.Path))
 	if err != nil {
 		return fmt.Errorf("create file: %w", err)
 	}
@@ -152,7 +152,7 @@ func (s *Storage) Get(url string) (*os.File, error) {
 		return nil, fmt.Errorf("get file path: %w", err)
 	}
 
-	file, err := os.Open(path)
+	file, err := os.Open(filepath.Join(s.storagePath, path))
 	if err != nil {
 		return nil, fmt.Errorf("open file: %w", err)
 	}
@@ -175,7 +175,7 @@ func (s *Storage) Delete(url string) error {
 	}
 
 	// удалить файл из файловой системы по полученному пути
-	err = os.Remove(path)
+	err = os.Remove(filepath.Join(s.storagePath, path))
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("remove file: %w", err)
