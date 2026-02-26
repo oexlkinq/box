@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>choose box</title>
+    <style>
+        body {
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        form {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        input[type="file"] {
+            padding: 4rem;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <form method="POST">
+        <input type="text" name="folder" placeholder="id of folder">
+        <input type="submit" value="Open">
+    </form>
+</body>
+
+</html>

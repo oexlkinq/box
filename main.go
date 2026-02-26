@@ -17,7 +17,7 @@ func setup(storagePath string, dbFilePath string, maxStorageSize int64) error {
 		return fmt.Errorf("create storage: %w", err)
 	}
 
-	routes.SetupRoutes(r, s)
+	routes.SetupRoutes(r, s, "/")
 
 	return r.Run("[::]:2080")
 }
