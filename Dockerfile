@@ -7,7 +7,9 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
-COPY --parents main.go storage routes ./
+COPY main.go ./
+COPY storage ./storage
+COPY routes ./routes
 
 ENV GOCACHE=/gocache
 RUN --mount=type=cache,target="${GOCACHE}" go build -v -o /box
