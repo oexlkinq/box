@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"
 	"github.com/oexlkinq/box/storage"
 )
@@ -16,15 +17,16 @@ type FolderUrl struct {
 }
 
 type folderPageParams struct {
-	AbsFilePaths    []absFileUrls
+	Files           []fileInfo
 	AbsFolderUrl    string
 	AbsFolderDelUrl string
 	ID              string
 }
 
-type absFileUrls struct {
+type fileInfo struct {
 	AbsFileUrl    string
 	AbsFileDelUrl string
+	Size          string
 	Url           string
 }
 
@@ -50,17 +52,18 @@ func serveFolderPage(ctx *gin.Context, s *storage.Storage, basePath string, id s
 		return
 	}
 
-	afps := []absFileUrls{}
+	afps := []fileInfo{}
 	for _, file := range files {
-		afps = append(afps, absFileUrls{
+		afps = append(afps, fileInfo{
 			AbsFileUrl:    filepath.Join(basePath, file.Url),
 			AbsFileDelUrl: filepath.Join(basePath, "del", file.Url),
+			Size:          humanize.IBytes(uint64(file.Size)),
 			Url:           file.Url,
 		})
 	}
 
 	ctx.HTML(http.StatusOK, "folder.tmpl", folderPageParams{
-		AbsFilePaths:    afps,
+		Files:           afps,
 		AbsFolderUrl:    filepath.Join(basePath, id),
 		AbsFolderDelUrl: filepath.Join(basePath, "del", id),
 		ID:              id,

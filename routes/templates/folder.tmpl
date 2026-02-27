@@ -33,11 +33,12 @@
 
 <body>
     <ul>
-        {{range .AbsFilePaths}}
+        {{range .Files}}
             <li>
                 <a href="{{.AbsFileUrl}}" download>{{.Url}}</a>
                 |
                 <a href="{{.AbsFileDelUrl}}">del</a>
+                ({{.Size}})
             </li>
         {{else}}
             <li>Empty for now</li>
