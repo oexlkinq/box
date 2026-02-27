@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/oexlkinq/box/storage"
@@ -21,7 +22,7 @@ func MakeFolderPage(s *storage.Storage, basePath string) gin.HandlerFunc {
 			return
 		}
 
-		ctx.Redirect(http.StatusSeeOther, form.Folder)
+		ctx.Redirect(http.StatusSeeOther, filepath.Join(basePath, form.Folder))
 	}
 }
 
