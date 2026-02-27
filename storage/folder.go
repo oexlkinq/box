@@ -12,12 +12,13 @@ import (
 )
 
 type Folder struct {
-	storage *Storage
+	storage   *Storage
+	sizeQuota int64
 }
 
 func (s *Storage) Allocate(size int64) (*Folder, error) {
-	sizeQuota := s.maxStorageSize - size
-	if sizeQuota < 0 {
+	storageSizeQuota := s.maxStorageSize - size
+	if storageSizeQuota < 0 {
 		return nil, ErrFileIsTooLarge
 	}
 
@@ -39,7 +40,7 @@ func (s *Storage) Allocate(size int64) (*Folder, error) {
 			FROM files
 		) t
 		WHERE t.csize >= ?
-	`, sizeQuota)
+	`, storageSizeQuota)
 	if err != nil {
 		return nil, fmt.Errorf("query excess files: %w", err)
 	}
@@ -74,7 +75,10 @@ func (s *Storage) Allocate(size int64) (*Folder, error) {
 		return nil, err
 	}
 
-	return &Folder{s}, nil
+	return &Folder{
+		storage:   s,
+		sizeQuota: size,
+	}, nil
 }
 
 var ErrFileIsTooLarge = errors.New("file is larger than max size of storage")
@@ -107,10 +111,13 @@ func (folder *Folder) Put(r io.Reader, url string) (*File, error) {
 
 	defer f.Close()
 
-	file.Size, err = io.Copy(f, r)
+	// записать не больше заявленного в Content-Length объёма
+	file.Size, err = io.CopyN(f, r, folder.sizeQuota)
 	if err != nil {
 		return nil, fmt.Errorf("write file: %w", err)
 	}
+
+	folder.sizeQuota -= file.Size
 
 	// сделать в бд запись о новом файле
 	_, err = tx.NamedExec(`INSERT INTO files (ts, url, path, size) VALUES (:ts, :url, :path, :size)`, file)
