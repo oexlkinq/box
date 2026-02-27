@@ -114,7 +114,9 @@ func (folder *Folder) Put(r io.Reader, url string) (*File, error) {
 	// записать не больше заявленного в Content-Length объёма
 	file.Size, err = io.CopyN(f, r, folder.sizeQuota)
 	if err != nil {
-		return nil, fmt.Errorf("write file: %w", err)
+		if !errors.Is(err, io.EOF) {
+			return nil, fmt.Errorf("write file: %w", err)
+		}
 	}
 
 	folder.sizeQuota -= file.Size
