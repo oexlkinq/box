@@ -132,7 +132,7 @@ func MakePostFolder(s *storage.Storage, basePath string) gin.HandlerFunc {
 			}
 		}
 
-		ctx.Redirect(http.StatusSeeOther, ctx.Request.URL.Path)
+		ctx.Redirect(http.StatusSeeOther, filepath.Join(basePath, folderUrl.Folder))
 	}
 }
 
