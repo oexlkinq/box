@@ -3,7 +3,6 @@ package routes
 import (
 	"errors"
 	"fmt"
-	"io"
 	"mime"
 	"net/http"
 	"path/filepath"
@@ -27,7 +26,7 @@ func MakeGetFile(s *storage.Storage) gin.HandlerFunc {
 			return
 		}
 
-		file, err := s.Get(filepath.Join(fileUrl.Folder, fileUrl.File))
+		file, size, err := s.Get(ctx, filepath.Join(fileUrl.Folder, fileUrl.File))
 		if err != nil {
 			if errors.Is(err, storage.ErrFileNotExists) {
 				ctx.AbortWithError(http.StatusNotFound, err)
@@ -37,15 +36,14 @@ func MakeGetFile(s *storage.Storage) gin.HandlerFunc {
 			ctx.AbortWithError(http.StatusInternalServerError, fmt.Errorf("get file from storage: %w", err))
 			return
 		}
-		defer file.Close()
 
-		ctx.Header("Content-Disposition", "attachment; filename="+fileUrl.File)
-		ctx.Header("Content-Type", mime.TypeByExtension(filepath.Ext(fileUrl.File)))
-		_, err = io.Copy(ctx.Writer, file)
-		if err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, fmt.Errorf("write file to response: %w", err))
-			return
-		}
+		ctx.DataFromReader(
+			http.StatusOK,
+			size,
+			mime.TypeByExtension(filepath.Ext(fileUrl.File)),
+			file,
+			map[string]string{"Content-Disposition": fmt.Sprintf(`attachment; filename="%s"`, fileUrl.File)},
+		)
 	}
 }
 

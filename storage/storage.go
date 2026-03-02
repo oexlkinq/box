@@ -1,9 +1,11 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -63,23 +65,27 @@ func New(storagePath string, dbFilePath string, maxStorageSize int64) (*Storage,
 
 var ErrFileNotExists = errors.New("file not exists")
 
-func (s *Storage) Get(url string) (*os.File, error) {
-	path := ""
-	err := s.dbc.Get(&path, `SELECT path FROM files WHERE url = ?`, url)
+func (s *Storage) Get(ctx context.Context, url string) (io.Reader, int64, error) {
+	fileInfo := File{}
+	err := s.dbc.Get(&fileInfo, `SELECT path, size FROM files WHERE url = ?`, url)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrFileNotExists
+			return nil, 0, ErrFileNotExists
 		}
 
-		return nil, fmt.Errorf("get file path: %w", err)
+		return nil, 0, fmt.Errorf("get file path: %w", err)
 	}
 
-	file, err := os.Open(filepath.Join(s.storagePath, path))
+	file, err := os.Open(filepath.Join(s.storagePath, fileInfo.Path))
 	if err != nil {
-		return nil, fmt.Errorf("open file: %w", err)
+		return nil, 0, fmt.Errorf("open file: %w", err)
 	}
 
-	return file, nil
+	context.AfterFunc(ctx, func() {
+		file.Close()
+	})
+
+	return file, fileInfo.Size, nil
 }
 
 func (s *Storage) Delete(url string) error {
