@@ -103,18 +103,26 @@ func (folder *Folder) Put(r io.Reader, url string) (*File, error) {
 		Url:  url,
 	}
 
+	realPath := filepath.Join(folder.storage.storagePath, file.Path)
+
 	// записать файл на диск
-	f, err := os.Create(filepath.Join(folder.storage.storagePath, file.Path))
+	f, err := os.Create(realPath)
 	if err != nil {
 		return nil, fmt.Errorf("create file: %w", err)
 	}
 
-	defer f.Close()
-
 	// записать не больше заявленного в Content-Length объёма
 	file.Size, err = io.CopyN(f, r, folder.sizeQuota)
+	f.Close()
+
 	if err != nil {
 		if !errors.Is(err, io.EOF) {
+			// удалить частично скачанный файл
+			removeErr := os.Remove(realPath)
+			if removeErr != nil {
+				slog.Error(fmt.Errorf("remove partially downloaded file: %w", err).Error())
+			}
+
 			return nil, fmt.Errorf("write file: %w", err)
 		}
 	}
