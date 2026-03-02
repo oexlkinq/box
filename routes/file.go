@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"path/filepath"
 
@@ -38,6 +39,8 @@ func MakeGetFile(s *storage.Storage) gin.HandlerFunc {
 		}
 		defer file.Close()
 
+		ctx.Header("Content-Disposition", "attachment; filename="+fileUrl.File)
+		ctx.Header("Content-Type", mime.TypeByExtension(filepath.Ext(fileUrl.File)))
 		_, err = io.Copy(ctx.Writer, file)
 		if err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, fmt.Errorf("write file to response: %w", err))
