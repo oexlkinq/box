@@ -3,24 +3,30 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.ID}} @box</title>
     <style>
-        body {
-            place-content: center;
-            min-height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
+        body, html {
+            height: 100%;
         }
 
+        body {
+            place-content: center;
+            font-family: Arial, sans-serif;
+        }
+        
         body, form {
             display: grid;
             gap: 0.5rem;
         }
-
-        h1 {
+        
+        h3, body, p {
             margin: 0;
-            font-size: 1.2rem;
+        }
+        
+        h3 {
             text-align: center;
+            font-size: 1.2rem;
         }
 
         input[type="file"] {
@@ -51,13 +57,13 @@
     </ul>
 
     <form id="form" hx-post hx-target="body" hx-encoding="multipart/form-data">
-        <h1>
+        <h3>
             Upload to
             <a href="{{.AbsFolderUrl}}">{{.ID}}</a>
             |
             <a href="{{.AbsFolderDelUrl}}">del</a>
-        </h1>
-<p>Free {{.FreeSpace}}/{{.AvailableSpace}}</p>
+        </h3>
+        <p>Free {{.FreeSpace}}/{{.AvailableSpace}}</p>
         <input type="file" name="file" multiple required>
         <input type="submit" value="Upload">
     </form>
