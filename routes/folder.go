@@ -42,42 +42,38 @@ func MakeGetFolder(s *storage.Storage, basePath string) gin.HandlerFunc {
 			return
 		}
 
-		serveFolderPage(ctx, s, basePath, folderUrl.Folder)
-	}
-}
+		// достать список файлов в папке из бд
+		files, err := s.List(folderUrl.Folder)
+		if err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
 
-func serveFolderPage(ctx *gin.Context, s *storage.Storage, basePath string, id string) {
-	// достать список файлов в папке из бд
-	files, err := s.List(id)
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
+		afps := []fileInfo{}
+		for _, file := range files {
+			afps = append(afps, fileInfo{
+				AbsFileUrl:    filepath.Join(basePath, file.Url),
+				AbsFileDelUrl: filepath.Join(basePath, "del", file.Url),
+				Size:          humanize.IBytes(uint64(file.Size)),
+				Url:           file.Url,
+			})
+		}
 
-	afps := []fileInfo{}
-	for _, file := range files {
-		afps = append(afps, fileInfo{
-			AbsFileUrl:    filepath.Join(basePath, file.Url),
-			AbsFileDelUrl: filepath.Join(basePath, "del", file.Url),
-			Size:          humanize.IBytes(uint64(file.Size)),
-			Url:           file.Url,
+		freeSpace, err := s.GetFreeSpace()
+		if err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		ctx.HTML(http.StatusOK, "folder.tmpl", folderPageParams{
+			Files:           afps,
+			AbsFolderUrl:    filepath.Join(basePath, folderUrl.Folder),
+			AbsFolderDelUrl: filepath.Join(basePath, "del", folderUrl.Folder),
+			ID:              folderUrl.Folder,
+			FreeSpace:       humanize.IBytes(uint64(freeSpace)),
+			AvailableSpace:  humanize.IBytes(uint64(s.MaxStorageSize)),
 		})
 	}
-
-	freeSpace, err := s.GetFreeSpace()
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	ctx.HTML(http.StatusOK, "folder.tmpl", folderPageParams{
-		Files:           afps,
-		AbsFolderUrl:    filepath.Join(basePath, id),
-		AbsFolderDelUrl: filepath.Join(basePath, "del", id),
-		ID:              id,
-		FreeSpace:       humanize.IBytes(uint64(freeSpace)),
-		AvailableSpace:  humanize.IBytes(uint64(s.MaxStorageSize)),
-	})
 }
 
 func MakePostFolder(s *storage.Storage, basePath string) gin.HandlerFunc {
@@ -136,7 +132,7 @@ func MakePostFolder(s *storage.Storage, basePath string) gin.HandlerFunc {
 			}
 		}
 
-		serveFolderPage(ctx, s, basePath, folderUrl.Folder)
+		ctx.Redirect(http.StatusSeeOther, ctx.Request.URL.Path)
 	}
 }
 
@@ -165,6 +161,6 @@ func MakeDeleteFolder(s *storage.Storage, basePath string) gin.HandlerFunc {
 			}
 		}
 
-		ctx.String(http.StatusOK, "done")
+		ctx.Redirect(http.StatusSeeOther, basePath)
 	}
 }

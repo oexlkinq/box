@@ -23,7 +23,7 @@ func SetupRoutes(r *gin.Engine, s *storage.Storage, basePath string) *gin.Engine
 	// file
 	r.GET("/:folder/:file", MakeGetFile(s))
 
-	deleteFile := MakeDeleteFile(s)
+	deleteFile := MakeDeleteFile(s, basePath)
 	r.DELETE("/:folder/:file", deleteFile)
 	r.GET("/del/:folder/:file", deleteFile)
 

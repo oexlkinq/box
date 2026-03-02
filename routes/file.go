@@ -47,7 +47,7 @@ func MakeGetFile(s *storage.Storage) gin.HandlerFunc {
 	}
 }
 
-func MakeDeleteFile(s *storage.Storage) gin.HandlerFunc {
+func MakeDeleteFile(s *storage.Storage, basePath string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fileUrl := FileUrl{}
 
@@ -63,6 +63,6 @@ func MakeDeleteFile(s *storage.Storage) gin.HandlerFunc {
 			return
 		}
 
-		ctx.String(http.StatusOK, "done")
+		ctx.Redirect(http.StatusSeeOther, filepath.Join(basePath, fileUrl.Folder))
 	}
 }
