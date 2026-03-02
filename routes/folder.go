@@ -21,6 +21,8 @@ type folderPageParams struct {
 	AbsFolderUrl    string
 	AbsFolderDelUrl string
 	ID              string
+	FreeSpace       string
+	AvailableSpace  string
 }
 
 type fileInfo struct {
@@ -62,11 +64,19 @@ func serveFolderPage(ctx *gin.Context, s *storage.Storage, basePath string, id s
 		})
 	}
 
+	freeSpace, err := s.GetFreeSpace()
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
 	ctx.HTML(http.StatusOK, "folder.tmpl", folderPageParams{
 		Files:           afps,
 		AbsFolderUrl:    filepath.Join(basePath, id),
 		AbsFolderDelUrl: filepath.Join(basePath, "del", id),
 		ID:              id,
+		FreeSpace:       humanize.IBytes(uint64(freeSpace)),
+		AvailableSpace:  humanize.IBytes(uint64(s.MaxStorageSize)),
 	})
 }
 

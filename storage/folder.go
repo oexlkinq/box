@@ -17,7 +17,7 @@ type Folder struct {
 }
 
 func (s *Storage) Allocate(size int64) (*Folder, error) {
-	storageSizeQuota := s.maxStorageSize - size
+	storageSizeQuota := s.MaxStorageSize - size
 	if storageSizeQuota < 0 {
 		return nil, ErrFileIsTooLarge
 	}

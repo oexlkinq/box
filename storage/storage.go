@@ -13,7 +13,7 @@ import (
 
 type Storage struct {
 	dbc            *sqlx.DB
-	maxStorageSize int64
+	MaxStorageSize int64
 	storagePath    string
 }
 
@@ -56,7 +56,7 @@ func New(storagePath string, dbFilePath string, maxStorageSize int64) (*Storage,
 
 	return &Storage{
 		dbc:            dbc,
-		maxStorageSize: maxStorageSize,
+		MaxStorageSize: maxStorageSize,
 		storagePath:    storagePath,
 	}, nil
 }
@@ -119,4 +119,15 @@ func (s *Storage) List(prefix string) ([]File, error) {
 	}
 
 	return files, nil
+}
+
+func (s *Storage) GetFreeSpace() (int64, error) {
+	var usedSpace int64
+
+	err := s.dbc.Get(&usedSpace, "SELECT COALESCE(SUM(size),0) FROM files")
+	if err != nil {
+		return 0, fmt.Errorf("get used space: %w", err)
+	}
+
+	return s.MaxStorageSize - usedSpace, nil
 }
