@@ -12,6 +12,6 @@ services:
     ports:
       - ${LISTEN_PORT:?}:1080
     volumes:
-      - /vol
+      - ${STORAGE_PATH:-./vol}:/vol
     cap_drop:
       - ALL
